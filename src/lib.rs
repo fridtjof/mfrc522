@@ -34,7 +34,6 @@ use core::mem::MaybeUninit;
 use generic_array::typenum::consts::*;
 use generic_array::{ArrayLength, GenericArray};
 use hal::blocking::spi;
-use hal::digital::OutputPin;
 use hal::spi::{Mode, Phase, Polarity};
 
 mod picc;
@@ -77,9 +76,8 @@ pub enum Error<E> {
 // }
 
 /// MFRC522 driver
-pub struct Mfrc522<SPI, NSS> {
-    spi: SPI,
-    nss: NSS,
+pub struct Mfrc522<SPI> {
+    spi: SPI
 }
 
 const ERR_IRQ: u8 = 1 << 1;
@@ -89,14 +87,13 @@ const TIMER_IRQ: u8 = 1 << 0;
 
 const CRC_IRQ: u8 = 1 << 2;
 
-impl<E, NSS, SPI> Mfrc522<SPI, NSS>
+impl<E, SPI> Mfrc522<SPI>
 where
-    SPI: spi::Transfer<u8, Error = E> + spi::Write<u8, Error = E>,
-    NSS: OutputPin,
+    SPI: spi::Transfer<u8, Error = E> + spi::Write<u8, Error = E>
 {
-    /// Creates a new driver from a SPI driver and a NSS pin
-    pub fn new(spi: SPI, nss: NSS) -> Result<Self, E> {
-        let mut mfrc522 = Mfrc522 { spi, nss };
+    /// Creates a new driver from an SPI driver
+    pub fn new(spi: SPI) -> Result<Self, E> {
+        let mut mfrc522 = Mfrc522 { spi };
 
         // soft reset
         mfrc522.command(Command::SoftReset)?;
@@ -386,11 +383,7 @@ where
     where
         F: FnOnce(&mut Self) -> T,
     {
-        self.nss.set_low();
-        let result = f(self);
-        self.nss.set_high();
-
-        result
+        f(self)
     }
 }
 
