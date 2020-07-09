@@ -8,7 +8,7 @@
 //! - PIN19 = BCM10 = MOSI
 //! - PIN21 = BCM9 = MISO (SCL)
 //! - PIN23 = BCM11 = SCLK
-//! - PIN22 = BCM25 = NSS (SDA)
+//! - PIN24 = BCM8 = NSS (SDA)
 //! - PIN6 = GND = GND
 
 extern crate linux_embedded_hal as hal;
@@ -58,14 +58,8 @@ fn main() {
         .build();
     spi.configure(&options).unwrap();
 
-    let pin = Pin::new(25);
-    pin.export().unwrap();
-    while !pin.is_exported() {}
-    pin.set_direction(Direction::Out).unwrap();
-    pin.set_value(1).unwrap();
-
     let mut led = Led;
-    let mut mfrc522 = Mfrc522::new(spi, pin).unwrap();
+    let mut mfrc522 = Mfrc522::new(spi).unwrap();
 
     let vers = mfrc522.version().unwrap();
 
