@@ -29,7 +29,7 @@
 extern crate embedded_hal as hal;
 extern crate generic_array;
 
-use core::mem;
+use core::mem::MaybeUninit;
 
 use generic_array::typenum::consts::*;
 use generic_array::{ArrayLength, GenericArray};
@@ -155,7 +155,7 @@ where
             return Err(Error::Bcc);
         }
 
-        let mut tx: [u8; 9] = unsafe { mem::uninitialized() };
+        let mut tx: [u8; 9] = unsafe { MaybeUninit::uninit().assume_init() };
         tx[0] = picc::SEL_CL1;
         tx[1] = 0x70;
         tx[2..7].copy_from_slice(&rx);
@@ -313,7 +313,7 @@ where
         // }
 
         // grab RX data
-        let mut rx_buffer: GenericArray<u8, RX> = unsafe { mem::uninitialized() };
+        let mut rx_buffer: GenericArray<u8, RX> = unsafe { MaybeUninit::uninit().assume_init() };
 
         {
             let rx_buffer: &mut [u8] = &mut rx_buffer;
