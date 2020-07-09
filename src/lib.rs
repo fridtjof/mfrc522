@@ -332,28 +332,24 @@ where
     fn read(&mut self, reg: Register) -> Result<u8, E> {
         let mut buffer = [reg.read_address(), 0];
 
-        self.with_nss_low(|mfr| {
-            let buffer = mfr.spi.transfer(&mut buffer)?;
+        let buffer = self.spi.transfer(&mut buffer)?;
 
-            Ok(buffer[1])
-        })
+        Ok(buffer[1])
     }
 
     fn read_many<'b>(&mut self, reg: Register, buffer: &'b mut [u8]) -> Result<&'b [u8], E> {
         let byte = reg.read_address();
 
-        self.with_nss_low(move |mfr| {
-            mfr.spi.transfer(&mut [byte])?;
+        self.spi.transfer(&mut [byte])?;
 
-            let n = buffer.len();
-            for slot in &mut buffer[..n - 1] {
-                *slot = mfr.spi.transfer(&mut [byte])?[0];
-            }
+        let n = buffer.len();
+        for slot in &mut buffer[..n - 1] {
+            *slot = self.spi.transfer(&mut [byte])?[0];
+        }
 
-            buffer[n - 1] = mfr.spi.transfer(&mut [0])?[0];
+        buffer[n - 1] = self.spi.transfer(&mut [0])?[0];
 
-            Ok(&*buffer)
-        })
+        Ok(&*buffer)
     }
 
     fn rmw<F>(&mut self, reg: Register, f: F) -> Result<(), E>
@@ -366,24 +362,15 @@ where
     }
 
     fn write(&mut self, reg: Register, val: u8) -> Result<(), E> {
-        self.with_nss_low(|mfr| mfr.spi.write(&[reg.write_address(), val]))
+        self.spi.write(&[reg.write_address(), val])
     }
 
     fn write_many(&mut self, reg: Register, bytes: &[u8]) -> Result<(), E> {
-        self.with_nss_low(|mfr| {
-            for byte in bytes {
-                self.spi.write(&[reg.write_address(), *byte])?;
-            }
+        for byte in bytes {
+            self.spi.write(&[reg.write_address(), *byte])?;
+        }
 
-            Ok(())
-        })
-    }
-
-    fn with_nss_low<F, T>(&mut self, f: F) -> T
-    where
-        F: FnOnce(&mut Self) -> T,
-    {
-        f(self)
+        Ok(())
     }
 }
 
